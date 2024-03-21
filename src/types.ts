@@ -15,3 +15,9 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+export type KVBufferStore = {
+  get(key: string): Promise<Buffer | undefined>;
+  set(key: string, buffer: Buffer): Promise<void>;
+  del(key: string): Promise<void>;
+  has(key: string): Promise<boolean>;
+};
