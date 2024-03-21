@@ -19,7 +19,7 @@ Starting the service:
 You can check the service is running by running the command:
 
 ```shell
-curl localhost:5000/ar-io/observer/healthcheck
+curl localhost:6000/ar-io/resolver/healthcheck
 {"uptime":2.555423702,"date":"2023-09-14T21:24:27.677Z","message":"Welcome to the Permaweb."}
 ```
 
@@ -30,5 +30,5 @@ Build and run the container:
 
 ```shell
 docker build --build-arg NODE_VERSION=$(cat .nvmrc |cut -c2-8) --build-arg NODE_VERSION_SHORT=$(cat .nvmrc |cut -c2-3) . -t arns-resolver
-docker run -p 5000:5000 arns-resolver
+docker run -p 6000:6000 arns-resolver
 ```

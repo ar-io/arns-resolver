@@ -1,5 +1,5 @@
 /**
- * AR.IO Observer
+ * AR.IO ArNS Resolver
  * Copyright (C) 2023 Permanent Data Solutions, Inc. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify

@@ -1,12 +1,12 @@
 {
   "name": "ar-io-node",
   "version": "0.0.1",
-  "description": "The AR.IO network observer.",
+  "description": "The AR.IO ArNS resolver.",
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ar-io/ar-io-observer"
+    "url": "https://github.com/ar-io/arns-resolver"
   },
   "dependencies": {
     "@ar.io/sdk": "^1.0.0-alpha.9",
