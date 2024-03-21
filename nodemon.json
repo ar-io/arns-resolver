@@ -1,0 +1,5 @@
+{
+  "watch": ["src", "docs", ".env"],
+  "ext": "ts,yaml,json",
+  "exec": "ts-node --esm -r dotenv/config --project ./tsconfig.json ./src/service.ts"
+}

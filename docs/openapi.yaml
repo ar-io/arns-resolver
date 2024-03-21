@@ -1,0 +1,67 @@
+---
+openapi: 3.0.0
+info:
+  title: AR.IO ArNS Resolver
+  version: 0.0.1
+  description: |
+    AR.IO ArNS Resolver
+components:
+  schemas:
+    ArweaveAddress:
+      type: string
+    ArweaveWallet:
+      type: string
+      nullable: true
+    ArweaveId:
+      type: string
+      nullable: true
+    Timestamp:
+      type: integer
+    Evaluation:
+      type: boolean
+    HealthCheck:
+     type: object
+     properties:
+       uptime: { type: number }
+       date: { 
+        type: string,
+        format: date
+       }
+       message: { type: string }
+    URL:
+      type: string
+      description: |
+        A URL to a resource
+    Info:
+     type: object
+     properties: 
+       cacheUrl: { '$ref': '#/components/schemas/URL' }
+       contractTxId: { '$ref': '#/components/schemas/ArweaveId' }
+
+paths:
+  '/ar-io/resolver/healthcheck':
+    get:
+      responses:
+        '200':
+          description: |-
+            200 response
+          content:
+            application/json:
+              schema:
+                '$ref': '#/components/schemas/HealthCheck'
+  '/ar-io/resolver/info':
+    get:
+      responses:
+        '200':
+          description: |-
+            200 response
+          content:
+            application/json:
+              schema:
+                '$ref': '#/components/schemas/Info'
+  '/ar-io/resolver/record/{name}':
+    get:
+      responses:
+        '200':
+          description: |-
+            200 response

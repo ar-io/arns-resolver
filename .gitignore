@@ -1,0 +1,17 @@
+*.log
+/.direnv
+/.env
+/coverage
+/dist
+/node_modules
+/tmp
+/wallets
+/data
+/cache
+/null
+
+# VS Code
+/.vscode
+
+# macOS
+.DS_Store
