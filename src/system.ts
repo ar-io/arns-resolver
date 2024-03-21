@@ -17,6 +17,7 @@
  */
 import { ArIO, RemoteContract } from '@ar.io/sdk/node';
 
+import { LmdbKVStore } from './cache/lmdb-kv-store.js';
 import * as config from './config.js';
 import log from './log.js';
 
@@ -25,6 +26,10 @@ export const network = new ArIO({
     contractTxId: config.CONTRACT_TX_ID,
     url: config.CONTRACT_CACHE_URL,
   }),
+});
+
+export const arnsCache = new LmdbKVStore({
+  dbPath: config.ARNS_CACHE_PATH,
 });
 
 export async function evaluateArNSNames() {

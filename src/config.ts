@@ -38,4 +38,8 @@ export const CONTRACT_TX_ID = env.varOrDefault(
   'CONTRACT_TX_ID',
   'bLAgYxAdX2Ry-nt6aH2ixgvJXbpsEYm28NgJgyqfs-U',
 );
+export const ARNS_CACHE_PATH = env.varOrDefault(
+  'ARNS_CACHE_PATH',
+  './data/arns',
+);
 export const PORT = +env.varOrDefault('PORT', '6000');
