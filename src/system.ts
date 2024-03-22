@@ -52,6 +52,7 @@ export async function evaluateArNSNames() {
 
   // create a map of the contract records for O(1) lookup
   const contractRecordMap: Record<ContractTxId, Record<string, ANTRecord>> = {};
+  // TODO: wrap this in p-limit to avoid overloading the node process
   await Promise.all(
     [...contractTxIds].map(async (contractTxId) => {
       const antContract = new ANT({ contractTxId });
@@ -63,7 +64,7 @@ export async function evaluateArNSNames() {
         return {};
       });
 
-      if (antRecords) {
+      if (Object.keys(antRecords).length) {
         contractRecordMap[contractTxId] = antRecords;
       }
     }),
