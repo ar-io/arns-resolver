@@ -108,7 +108,6 @@ export async function evaluateArNSNames() {
         ...(apexRecordData.type === 'lease' && {
           endTimestamp: apexRecordData.endTimestamp,
         }),
-        cacheExpires: Date.now() + config.EVALUATION_INTERVAL_MS,
       };
       const resolvedRecordBuffer = Buffer.from(
         JSON.stringify(resolvedRecordObj),

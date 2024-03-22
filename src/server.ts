@@ -95,6 +95,7 @@ app.get('/ar-io/resolver/records/:name', async (req, res) => {
       });
       return;
     }
+    console.log(resolvedRecordData.toString());
     const recordData = JSON.parse(resolvedRecordData.toString());
     res.set({
       'Cache-Control': `public, max-age=${recordData.ttlSeconds}`,
@@ -107,10 +108,11 @@ app.get('/ar-io/resolver/records/:name', async (req, res) => {
       ...recordData,
       name: req.params.name,
     });
-  } catch (err) {
+  } catch (err: any) {
     log.error('Failed to get record', {
       name: req.params.name,
-      error: err,
+      message: err?.message,
+      stack: err?.stack,
     });
     res.status(500).json({
       error: 'Internal Server Error',

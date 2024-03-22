@@ -37,8 +37,12 @@ export class LmdbKVStore implements KVBufferStore {
    */
   private serialize(value: Buffer): Buffer {
     if (this.ttlSeconds === undefined) return value;
-    const buffer = Buffer.from(`${this.ttlSeconds}`);
-    return Buffer.concat([buffer, value]);
+    const expirationTimestamp = Buffer.allocUnsafe(8); // 8 bytes for a timestamp
+    expirationTimestamp.writeBigInt64BE(
+      BigInt(Date.now() + this.ttlSeconds * 1000),
+      0,
+    );
+    return Buffer.concat([expirationTimestamp, value]);
   }
 
   /**
@@ -46,11 +50,11 @@ export class LmdbKVStore implements KVBufferStore {
    */
   private deserialize(value: Buffer): Buffer | undefined {
     if (this.ttlSeconds === undefined) return value;
-    const ttl = value.readUInt32BE(0);
-    if (ttl < Date.now()) {
-      return undefined;
+    const expirationTimestamp = value.readBigInt64BE(0);
+    if (Date.now() > Number(expirationTimestamp)) {
+      return undefined; // The data has expired
     }
-    return value.slice(4);
+    return value.slice(8); // Skip the first 8 bytes (timestamp)
   }
 
   /**
@@ -67,7 +71,7 @@ export class LmdbKVStore implements KVBufferStore {
       await this.del(key);
       return undefined;
     }
-    return value;
+    return buffer;
   }
 
   /**
