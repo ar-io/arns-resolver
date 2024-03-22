@@ -51,7 +51,10 @@ export async function evaluateArNSNames() {
   );
 
   // create a map of the contract records for O(1) lookup
-  const contractRecordMap: Record<ContractTxId, Record<string, ANTRecord>> = {};
+  const contractRecordMap: Record<
+    ContractTxId,
+    { owner: string; records: Record<string, ANTRecord> }
+  > = {};
   // TODO: wrap this in p-limit to avoid overloading the node process
   await Promise.all(
     [...contractTxIds].map(async (contractTxId) => {
@@ -65,7 +68,10 @@ export async function evaluateArNSNames() {
       });
 
       if (Object.keys(antRecords).length) {
-        contractRecordMap[contractTxId] = antRecords;
+        contractRecordMap[contractTxId] = {
+          owner: await antContract.getOwner(),
+          records: antRecords,
+        };
       }
     }),
   );
@@ -74,18 +80,22 @@ export async function evaluateArNSNames() {
     contractCount: Object.keys(contractRecordMap).length,
   });
 
+  // filter out any records associated with an invalid contract
+  const validArNSRecords = Object.entries(apexRecords).filter(
+    ([_, record]) => record.contractTxId in contractRecordMap,
+  );
+
   // now go through all the record names and assign them to the resolved tx ids
-  for (const [apexName, apexRecordData] of Object.entries(apexRecords)) {
-    const contractRecords = contractRecordMap[apexRecordData.contractTxId];
-    const ant = new ANT({ contractTxId: apexRecordData.contractTxId });
+  for (const [apexName, apexRecordData] of validArNSRecords) {
+    const antData = contractRecordMap[apexRecordData.contractTxId];
     // TODO: current complexity is O(n^2) - we can do better by flattening records above before this loop
-    for (const [antName, antRecordData] of Object.entries(contractRecords)) {
+    for (const [antName, antRecordData] of Object.entries(antData.records)) {
       const resolvedRecordObj = {
         ttlSeconds: antRecordData.ttlSeconds,
         txId: antRecordData.transactionId,
         contractTxId: apexRecordData.contractTxId,
         type: apexRecordData.type,
-        owner: await ant.getOwner(),
+        owner: antData.owner,
         ...(apexRecordData.type === 'lease' && {
           endTimestamp: apexRecordData.endTimestamp,
         }),
@@ -93,11 +103,10 @@ export async function evaluateArNSNames() {
       const resolvedRecordBuffer = Buffer.from(
         JSON.stringify(resolvedRecordObj),
       );
-      if (antName === '@') {
-        cache.set(apexName, resolvedRecordBuffer);
-      } else {
-        cache.set(`${antName}_${apexName}`, resolvedRecordBuffer);
-      }
+      const cacheKey: string =
+        antName === '@' ? apexName : `${antName}_${apexName}`;
+      cache.set(cacheKey, resolvedRecordBuffer);
+      cache.set(cacheKey, resolvedRecordBuffer);
     }
   }
   log.info('Successfully evaluated arns names', {
