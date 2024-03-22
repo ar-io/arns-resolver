@@ -23,6 +23,7 @@ import log from './log.js';
 import { ContractTxId } from './types.js';
 
 let lastEvaluationTimestamp: number | undefined;
+export const getLastEvaluatedTimestamp = () => lastEvaluationTimestamp;
 export const contract = new ArIO({
   contract: new RemoteContract({
     contractTxId: config.CONTRACT_TX_ID,
@@ -30,10 +31,10 @@ export const contract = new ArIO({
   }),
 });
 
-export const getLastEvaluatedTimestamp = () => lastEvaluationTimestamp;
 // TODO: this could be done using any KV store - or in memory. For now, we are using LMDB for persistence.
 export const cache = new LmdbKVStore({
   dbPath: config.ARNS_CACHE_PATH,
+  ttlSeconds: config.EVALUATION_INTERVAL_MS / 1000,
 });
 
 export async function evaluateArNSNames() {
@@ -53,7 +54,7 @@ export async function evaluateArNSNames() {
   // create a map of the contract records for O(1) lookup
   const contractRecordMap: Record<
     ContractTxId,
-    { owner: string; records: Record<string, ANTRecord> }
+    { owner: string | undefined; records: Record<string, ANTRecord> }
   > = {};
   // TODO: wrap this in p-limit to avoid overloading the node process
   await Promise.all(
@@ -69,7 +70,13 @@ export async function evaluateArNSNames() {
 
       if (Object.keys(antRecords).length) {
         contractRecordMap[contractTxId] = {
-          owner: await antContract.getOwner(),
+          owner: await antContract.getOwner().catch((err) => {
+            log.error('Failed to get owner for contract', {
+              contractTxId,
+              error: err,
+            });
+            return undefined;
+          }),
           records: antRecords,
         };
       }
