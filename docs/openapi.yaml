@@ -17,6 +17,7 @@ components:
       nullable: true
     Timestamp:
       type: integer
+      nullable: true
     Evaluation:
       type: boolean
     HealthCheck:
@@ -34,6 +35,17 @@ components:
       properties:
         cacheUrl: { '$ref': '#/components/schemas/URL' }
         contractTxId: { '$ref': '#/components/schemas/ArweaveId' }
+        lastEvaluationTimestamp: { '$ref': '#/components/schemas/Timestamp' }
+    Record:
+      type: object
+      properties:
+        name: { type: string }
+        ttlSeconds: { type: integer }
+        txId: { $ref: '#/components/schemas/ArweaveId' }
+        endTimestamp: { '$ref': '#/components/schemas/Timestamp' }
+        owner: { $ref: '#/components/schemas/ArweaveAddress' }
+        contractTxId: { $ref: '#/components/schemas/ArweaveId' }
+        type: { type: string }
 
 paths:
   '/ar-io/resolver/healthcheck':
@@ -62,3 +74,25 @@ paths:
         '200':
           description: |-
             200 response
+          content:
+            application/json:
+              schema:
+                '$ref': '#/components/schemas/Record'
+        '404':
+          description: |-
+            404 response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+        '500':
+          description: |-
+            500 response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: { type: string }

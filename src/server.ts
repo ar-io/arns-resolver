@@ -96,17 +96,19 @@ app.get('/ar-io/resolver/records/:name', async (req, res) => {
       return;
     }
     const recordData = JSON.parse(resolvedRecordData.toString());
-    res.set({
-      'Cache-Control': `public, max-age=${recordData.ttlSeconds}`,
-      'Content-Type': 'application/json',
-      'X-ArNS-Resolved-Id': recordData.txId,
-      'X-ArNS-Ttl-Seconds': new Date().toISOString(),
-    });
-    res.status(200);
-    res.status(200).json({
-      ...recordData,
-      name: req.params.name,
-    });
+    console.log('recordData', recordData)
+    res
+      .status(200)
+      .set({
+        'Cache-Control': `public, max-age=${recordData.ttlSeconds}`,
+        'Content-Type': 'application/json',
+        'X-ArNS-Resolved-Id': recordData.txId,
+        'X-ArNS-Ttl-Seconds': new Date().toISOString(),
+      })
+      .json({
+        ...recordData,
+        name: req.params.name,
+      });
   } catch (err: any) {
     log.error('Failed to get record', {
       name: req.params.name,
