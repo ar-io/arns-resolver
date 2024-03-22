@@ -64,7 +64,7 @@ export async function evaluateArNSNames() {
       return parallelLimit(async () => {
         const antContract = new ANT({ contractTxId });
         const antRecords = await antContract.getRecords().catch((err) => {
-          log.error('Failed to get records for contract', {
+          log.debug('Failed to get records for contract', {
             contractTxId,
             error: err,
           });
@@ -74,7 +74,7 @@ export async function evaluateArNSNames() {
         if (Object.keys(antRecords).length) {
           contractRecordMap[contractTxId] = {
             owner: await antContract.getOwner().catch((err) => {
-              log.error('Failed to get owner for contract', {
+              log.debug('Failed to get owner for contract', {
                 contractTxId,
                 error: err,
               });

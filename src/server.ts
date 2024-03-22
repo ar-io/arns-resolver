@@ -88,6 +88,7 @@ app.get('/ar-io/resolver/info', (_req, res) => {
 
 app.get('/ar-io/resolver/records/:name', async (req, res) => {
   try {
+    log.debug('Checking cache for record', { name: req.params.name });
     const resolvedRecordData = await cache.get(req.params.name);
     if (!resolvedRecordData) {
       res.status(404).json({
@@ -96,6 +97,11 @@ app.get('/ar-io/resolver/records/:name', async (req, res) => {
       return;
     }
     const recordData = JSON.parse(resolvedRecordData.toString());
+    log.debug('Successfully fetched record from cache', {
+      name: req.params.name,
+      txId: recordData.txId,
+      ttlSeconds: recordData.ttlSeconds,
+    });
     res
       .status(200)
       .set({
