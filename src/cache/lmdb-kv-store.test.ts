@@ -15,11 +15,24 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-export type ContractTxId = string;
-export type RecordTxId = string;
-export type KVBufferStore = {
-  get(key: string): Promise<Buffer | undefined>;
-  set(key: string, buffer: Buffer): Promise<void>;
-  del(key: string): Promise<void>;
-  has(key: string): Promise<boolean>;
-};
+import { LmdbKVStore } from './lmdb-kv-store.js';
+
+describe('LmdbKVStore', () => {
+  const cache = new LmdbKVStore({
+    dbPath: './data/test',
+    ttlSeconds: 1,
+  });
+
+  it('should set and get value', async () => {
+    await cache.set('test', Buffer.from('hello'));
+    const value = await cache.get('test');
+    expect(value).toEqual(Buffer.from('hello'));
+  });
+
+  it('should remove a value once ttl has expired', async () => {
+    await cache.set('expire', Buffer.from('hello'));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const value = await cache.get('expire');
+    expect(value).toBeUndefined();
+  });
+});

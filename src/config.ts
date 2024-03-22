@@ -23,7 +23,7 @@ dotenv.config();
 
 export const EVALUATION_INTERVAL_MS = +env.varOrDefault(
   'EVALUATION_INTERVAL_MS',
-  `${60 * 60 * 15}`, // 15 mins by default
+  `${1000 * 60 * 15}`, // 15 mins by default
 );
 
 export const RUN_RESOLVER = env.varOrDefault('RUN_RESOLVER', 'true') === 'true';
