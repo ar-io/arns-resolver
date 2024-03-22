@@ -54,12 +54,11 @@ export async function evaluateArNSNames() {
     Object.values(apexRecords).map((record) => record.contractTxId),
   );
 
-  // create a map of the contract records for O(1) lookup
+  // create a map of the contract records and use concurrency to fetch their records
   const contractRecordMap: Record<
     ContractTxId,
     { owner: string | undefined; records: Record<string, ANTRecord> }
   > = {};
-  // TODO: wrap this in p-limit to avoid overloading the node process
   await Promise.all(
     [...contractTxIds].map((contractTxId) => {
       return parallelLimit(async () => {
@@ -121,6 +120,7 @@ export async function evaluateArNSNames() {
         JSON.stringify(resolvedRecordObj),
       );
       const cacheKey = antName === '@' ? apexName : `${antName}_${apexName}`;
+      // all inserts will get a ttl based on the cache configuration
       const promise = cache.set(cacheKey, resolvedRecordBuffer).catch((err) => {
         log.error('Failed to set record in cache', {
           cacheKey,
@@ -130,12 +130,11 @@ export async function evaluateArNSNames() {
       insertPromises.push(promise);
     }
   }
-  // await all the inserts - use plimit to hammering the cache
+  // use pLimit to prevent overwhelming cache
   await Promise.all(
     insertPromises.map((promise) => parallelLimit(() => promise)),
   );
 
-  // TODO: clean up any records that are no longer valid
   log.info('Successfully evaluated arns names', {
     durationMs: Date.now() - startTime,
   });
