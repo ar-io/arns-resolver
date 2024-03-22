@@ -95,7 +95,6 @@ app.get('/ar-io/resolver/records/:name', async (req, res) => {
       });
       return;
     }
-    console.log(resolvedRecordData.toString());
     const recordData = JSON.parse(resolvedRecordData.toString());
     res.set({
       'Cache-Control': `public, max-age=${recordData.ttlSeconds}`,
