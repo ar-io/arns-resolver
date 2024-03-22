@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 import { ANT, ANTRecord, ArIO, RemoteContract } from '@ar.io/sdk/node';
+import pLimit from 'p-limit';
 
 import { LmdbKVStore } from './cache/lmdb-kv-store.js';
 import * as config from './config.js';
@@ -36,6 +37,8 @@ export const cache = new LmdbKVStore({
   dbPath: config.ARNS_CACHE_PATH,
   ttlSeconds: config.EVALUATION_INTERVAL_MS / 1000,
 });
+
+const parallelLimit = pLimit(100);
 
 export async function evaluateArNSNames() {
   log.info('Evaluating arns names');
@@ -58,28 +61,30 @@ export async function evaluateArNSNames() {
   > = {};
   // TODO: wrap this in p-limit to avoid overloading the node process
   await Promise.all(
-    [...contractTxIds].map(async (contractTxId) => {
-      const antContract = new ANT({ contractTxId });
-      const antRecords = await antContract.getRecords().catch((err) => {
-        log.error('Failed to get records for contract', {
-          contractTxId,
-          error: err,
+    [...contractTxIds].map((contractTxId) => {
+      return parallelLimit(async () => {
+        const antContract = new ANT({ contractTxId });
+        const antRecords = await antContract.getRecords().catch((err) => {
+          log.error('Failed to get records for contract', {
+            contractTxId,
+            error: err,
+          });
+          return {};
         });
-        return {};
-      });
 
-      if (Object.keys(antRecords).length) {
-        contractRecordMap[contractTxId] = {
-          owner: await antContract.getOwner().catch((err) => {
-            log.error('Failed to get owner for contract', {
-              contractTxId,
-              error: err,
-            });
-            return undefined;
-          }),
-          records: antRecords,
-        };
-      }
+        if (Object.keys(antRecords).length) {
+          contractRecordMap[contractTxId] = {
+            owner: await antContract.getOwner().catch((err) => {
+              log.error('Failed to get owner for contract', {
+                contractTxId,
+                error: err,
+              });
+              return undefined;
+            }),
+            records: antRecords,
+          };
+        }
+      });
     }),
   );
 
@@ -116,11 +121,19 @@ export async function evaluateArNSNames() {
         JSON.stringify(resolvedRecordObj),
       );
       const cacheKey = antName === '@' ? apexName : `${antName}_${apexName}`;
-      insertPromises.push(cache.set(cacheKey, resolvedRecordBuffer));
+      const promise = cache.set(cacheKey, resolvedRecordBuffer).catch((err) => {
+        log.error('Failed to set record in cache', {
+          cacheKey,
+          error: err,
+        });
+      });
+      insertPromises.push(promise);
     }
   }
-  // await all the inserts - performance concerns on the db
-  await Promise.all(insertPromises);
+  // await all the inserts - use plimit to hammering the cache
+  await Promise.all(
+    insertPromises.map((promise) => parallelLimit(() => promise)),
+  );
 
   // TODO: clean up any records that are no longer valid
   log.info('Successfully evaluated arns names', {

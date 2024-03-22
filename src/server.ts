@@ -96,7 +96,6 @@ app.get('/ar-io/resolver/records/:name', async (req, res) => {
       return;
     }
     const recordData = JSON.parse(resolvedRecordData.toString());
-    console.log('recordData', recordData)
     res
       .status(200)
       .set({
