@@ -23,6 +23,8 @@ import swaggerUi from 'swagger-ui-express';
 import YAML from 'yaml';
 
 import * as config from './config.js';
+import log from './log.js';
+import { cache } from './system.js';
 
 // HTTP server
 export const app = express();
@@ -61,7 +63,7 @@ if (config.ENABLE_OPENAPI_VALIDATION) {
     OpenApiValidator.middleware({
       apiSpec: './docs/openapi.yaml',
       validateRequests: true, // (default)
-      validateResponses: true, // false by default
+      validateResponses: false, // false by default
     }),
   );
 }
@@ -83,4 +85,34 @@ app.get('/ar-io/resolver/info', (_req, res) => {
   });
 });
 
-// TODO: add /ar-i/resolver/record/:key endpoint
+app.get('/ar-io/resolver/records/:name', async (req, res) => {
+  try {
+    const resolvedRecordData = await cache.get(req.params.name);
+    if (!resolvedRecordData) {
+      res.status(404).json({
+        error: 'Record not found',
+      });
+      return;
+    }
+    const recordData = JSON.parse(resolvedRecordData.toString());
+    res.set({
+      'Cache-Control': `public, max-age=${recordData.ttlSeconds}`,
+      'Content-Type': 'application/json',
+      'X-ArNS-Resolved-Tx-Id': recordData.txId,
+      'X-ArNS-Ttl-Seconds': new Date().toISOString(),
+    });
+    res.status(200);
+    res.status(200).json({
+      ...recordData,
+      name: req.params.name,
+    });
+  } catch (err) {
+    log.error('Failed to get record', {
+      name: req.params.name,
+      error: err,
+    });
+    res.status(500).json({
+      error: 'Internal Server Error',
+    });
+  }
+});

@@ -9,7 +9,7 @@
     "url": "https://github.com/ar-io/arns-resolver"
   },
   "dependencies": {
-    "@ar.io/sdk": "^1.0.0-alpha.9",
+    "@ar.io/sdk": "^1.0.0-alpha.12",
     "@ardrive/ardrive-promise-cache": "^1.1.4",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
@@ -53,6 +53,8 @@
     "start": "node dist/service.js",
     "clean": "npx rimraf [ coverage dist cache ]",
     "lint:check": "eslint src",
-    "lint:fix": "eslint --fix src"
+    "lint:fix": "eslint --fix src",
+    "format:check": "prettier --check .",
+    "format:fix": "prettier --write ."
   }
 }

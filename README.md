@@ -14,7 +14,7 @@ Requirements:
 Starting the service:
 
 - `nvm use`
-- `yarn start:watch` 
+- `yarn start:watch`
 
 You can check the service is running by running the command:
 
@@ -22,7 +22,6 @@ You can check the service is running by running the command:
 curl localhost:6000/ar-io/resolver/healthcheck
 {"uptime":2.555423702,"date":"2023-09-14T21:24:27.677Z","message":"Welcome to the Permaweb."}
 ```
-
 
 ### Docker
 

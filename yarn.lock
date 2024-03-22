@@ -32,10 +32,10 @@
     call-me-maybe "^1.0.1"
     js-yaml "^4.1.0"
 
-"@ar.io/sdk@^1.0.0-alpha.9":
-  version "1.0.0-alpha.9"
-  resolved "https://registry.yarnpkg.com/@ar.io/sdk/-/sdk-1.0.0-alpha.9.tgz#6bc8949e9c2d8ad00d91974147fe8419e5d72cd0"
-  integrity sha512-R1rPprSc92fOtcU8zWrAHMKUmk5nGoml9jZ7qVUP1hranCHRhygkTXH5iJzDsBqImPVekmsfPXriIsnTm7qr8w==
+"@ar.io/sdk@^1.0.0-alpha.12":
+  version "1.0.0-alpha.12"
+  resolved "https://registry.yarnpkg.com/@ar.io/sdk/-/sdk-1.0.0-alpha.12.tgz#4849c607e9c7775b68eff6c6a85c75f6dc3afbc3"
+  integrity sha512-hYgk9td3+ummoNONK0fjtp9+aHbH+5J1gEEGKEmNWLW6AD4K5tHu9cM2gAWGQYTaIkrMqFu0Rm69+M2r+GUY/w==
   dependencies:
     arweave "^1.14.4"
     axios "1.4.0"

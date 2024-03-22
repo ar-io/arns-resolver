@@ -20,23 +20,20 @@ components:
     Evaluation:
       type: boolean
     HealthCheck:
-     type: object
-     properties:
-       uptime: { type: number }
-       date: { 
-        type: string,
-        format: date
-       }
-       message: { type: string }
+      type: object
+      properties:
+        uptime: { type: number }
+        date: { type: string, format: date }
+        message: { type: string }
     URL:
       type: string
       description: |
         A URL to a resource
     Info:
-     type: object
-     properties: 
-       cacheUrl: { '$ref': '#/components/schemas/URL' }
-       contractTxId: { '$ref': '#/components/schemas/ArweaveId' }
+      type: object
+      properties:
+        cacheUrl: { '$ref': '#/components/schemas/URL' }
+        contractTxId: { '$ref': '#/components/schemas/ArweaveId' }
 
 paths:
   '/ar-io/resolver/healthcheck':
@@ -59,7 +56,7 @@ paths:
             application/json:
               schema:
                 '$ref': '#/components/schemas/Info'
-  '/ar-io/resolver/record/{name}':
+  '/ar-io/resolver/records/{name}':
     get:
       responses:
         '200':
