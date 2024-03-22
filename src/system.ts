@@ -22,7 +22,7 @@ import * as config from './config.js';
 import log from './log.js';
 import { ContractTxId } from './types.js';
 
-export let lastEvaluationTime = 0;
+let lastEvaluationTimestamp: number | undefined;
 export const contract = new ArIO({
   contract: new RemoteContract({
     contractTxId: config.CONTRACT_TX_ID,
@@ -30,7 +30,7 @@ export const contract = new ArIO({
   }),
 });
 
-export const getLastEvaluationTime = () => lastEvaluationTime;
+export const getLastEvaluatedTimestamp = () => lastEvaluationTimestamp;
 // TODO: this could be done using any KV store - or in memory. For now, we are using LMDB for persistence.
 export const cache = new LmdbKVStore({
   dbPath: config.ARNS_CACHE_PATH,
@@ -85,6 +85,8 @@ export async function evaluateArNSNames() {
     ([_, record]) => record.contractTxId in contractRecordMap,
   );
 
+  const insertPromises = [];
+
   // now go through all the record names and assign them to the resolved tx ids
   for (const [apexName, apexRecordData] of validArNSRecords) {
     const antData = contractRecordMap[apexRecordData.contractTxId];
@@ -99,19 +101,22 @@ export async function evaluateArNSNames() {
         ...(apexRecordData.type === 'lease' && {
           endTimestamp: apexRecordData.endTimestamp,
         }),
+        cacheExpires: Date.now() + config.EVALUATION_INTERVAL_MS,
       };
       const resolvedRecordBuffer = Buffer.from(
         JSON.stringify(resolvedRecordObj),
       );
-      const cacheKey: string =
-        antName === '@' ? apexName : `${antName}_${apexName}`;
-      cache.set(cacheKey, resolvedRecordBuffer);
-      cache.set(cacheKey, resolvedRecordBuffer);
+      const cacheKey = antName === '@' ? apexName : `${antName}_${apexName}`;
+      insertPromises.push(cache.set(cacheKey, resolvedRecordBuffer));
     }
   }
+  // await all the inserts - performance concerns on the db
+  await Promise.all(insertPromises);
+
+  // TODO: clean up any records that are no longer valid
   log.info('Successfully evaluated arns names', {
     durationMs: Date.now() - startTime,
   });
-  lastEvaluationTime = Date.now();
+  lastEvaluationTimestamp = Date.now();
   return;
 }
