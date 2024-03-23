@@ -103,12 +103,11 @@ export async function evaluateArNSNames() {
     const antData = contractRecordMap[apexRecordData.contractTxId];
     // TODO: current complexity is O(n^2) - we can do better by flattening records above before this loop
     for (const [antName, antRecordData] of Object.entries(antData.records)) {
-      // do not resolve old ants that do not match proper structure
       const resolvedRecordObj = {
         ttlSeconds:
           antRecordData.ttlSeconds || config.EVALUATION_INTERVAL_MS / 1000,
         // TODO: deprecate support for legacy ANTs
-        txId: antRecordData.transactionId || antRecordData,
+        txId: antRecordData.transactionId ?? antRecordData,
         contractTxId: apexRecordData.contractTxId,
         type: apexRecordData.type,
         owner: antData.owner,
