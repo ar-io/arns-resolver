@@ -34,8 +34,8 @@ export const CONTRACT_CACHE_URL = env.varOrDefault(
   'CONTRACT_CACHE_URL',
   'https://api.arns.app',
 );
-export const CONTRACT_TX_ID = env.varOrDefault(
-  'CONTRACT_TX_ID',
+export const CONTRACT_ID = env.varOrDefault(
+  'CONTRACT_ID',
   'bLAgYxAdX2Ry-nt6aH2ixgvJXbpsEYm28NgJgyqfs-U',
 );
 export const ARNS_CACHE_PATH = env.varOrDefault(
