@@ -1,5 +1,5 @@
 /**
- * AR.IO Observer
+ * AR.IO ArNS Resolver
  * Copyright (C) 2023 Permanent Data Solutions, Inc. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
@@ -15,3 +15,11 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+export type ContractTxId = string;
+export type RecordTxId = string;
+export type KVBufferStore = {
+  get(key: string): Promise<Buffer | undefined>;
+  set(key: string, buffer: Buffer): Promise<void>;
+  del(key: string): Promise<void>;
+  has(key: string): Promise<boolean>;
+};

@@ -1,5 +1,5 @@
 /**
- * AR.IO Observer
+ * AR.IO ArNS Resolver
  * Copyright (C) 2023 Permanent Data Solutions, Inc. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,7 +23,7 @@ dotenv.config();
 
 export const EVALUATION_INTERVAL_MS = +env.varOrDefault(
   'EVALUATION_INTERVAL_MS',
-  `${60 * 60 * 15}`, // 15 mins by default
+  `${1000 * 60 * 15}`, // 15 mins by default
 );
 
 export const RUN_RESOLVER = env.varOrDefault('RUN_RESOLVER', 'true') === 'true';
@@ -37,5 +37,9 @@ export const CONTRACT_CACHE_URL = env.varOrDefault(
 export const CONTRACT_TX_ID = env.varOrDefault(
   'CONTRACT_TX_ID',
   'bLAgYxAdX2Ry-nt6aH2ixgvJXbpsEYm28NgJgyqfs-U',
+);
+export const ARNS_CACHE_PATH = env.varOrDefault(
+  'ARNS_CACHE_PATH',
+  './data/arns',
 );
 export const PORT = +env.varOrDefault('PORT', '6000');
