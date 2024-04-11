@@ -14,6 +14,7 @@ Requirements:
 Starting the service:
 
 - `nvm use`
+- `cp .env.example .env`
 - `yarn start:watch`
 
 You can check the service is running by running the command:

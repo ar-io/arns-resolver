@@ -27,8 +27,8 @@ let lastEvaluationTimestamp: number | undefined;
 export const getLastEvaluatedTimestamp = () => lastEvaluationTimestamp;
 export const contract = new ArIO({
   contract: new RemoteContract({
-    contractTxId: config.CONTRACT_TX_ID,
-    url: config.CONTRACT_CACHE_URL,
+    contractTxId: config.CONTRACT_ID,
+    cacheUrl: config.CONTRACT_CACHE_URL,
   }),
 });
 
