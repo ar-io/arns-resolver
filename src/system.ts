@@ -15,7 +15,14 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import { ANT, ANTRecord, ArIO, RemoteContract } from '@ar.io/sdk/node';
+import {
+  ANT,
+  ANTRecord,
+  ANTState,
+  ArIO,
+  ArIOState,
+  RemoteContract,
+} from '@ar.io/sdk/node';
 import pLimit from 'p-limit';
 
 import { LmdbKVStore } from './cache/lmdb-kv-store.js';
@@ -25,8 +32,8 @@ import { ContractTxId } from './types.js';
 
 let lastEvaluationTimestamp: number | undefined;
 export const getLastEvaluatedTimestamp = () => lastEvaluationTimestamp;
-export const contract = new ArIO({
-  contract: new RemoteContract({
+export const contract = ArIO.init({
+  contract: new RemoteContract<ArIOState>({
     contractTxId: config.CONTRACT_ID,
     cacheUrl: config.CONTRACT_CACHE_URL,
   }),
@@ -62,8 +69,13 @@ export async function evaluateArNSNames() {
   await Promise.all(
     [...contractTxIds].map((contractTxId) => {
       return parallelLimit(async () => {
-        const antContract = new ANT({ contractTxId });
-        const antRecords = await antContract.getRecords().catch((err) => {
+        const antContract = ANT.init({
+          contract: new RemoteContract<ANTState>({
+            contractTxId,
+            cacheUrl: config.CONTRACT_CACHE_URL,
+          }),
+        });
+        const antRecords = await antContract.getRecords().catch((err: any) => {
           log.debug('Failed to get records for contract', {
             contractTxId,
             error: err,
@@ -73,7 +85,7 @@ export async function evaluateArNSNames() {
 
         if (Object.keys(antRecords).length) {
           contractRecordMap[contractTxId] = {
-            owner: await antContract.getOwner().catch((err) => {
+            owner: await antContract.getOwner().catch((err: any) => {
               log.debug('Failed to get owner for contract', {
                 contractTxId,
                 error: err,
