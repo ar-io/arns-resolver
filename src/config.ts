@@ -17,9 +17,7 @@
  */
 import dotenv from 'dotenv';
 
-
 import * as env from './lib/env.js';
-
 
 dotenv.config();
 
