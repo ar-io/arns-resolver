@@ -19,8 +19,8 @@ import {
   ANT,
   ANTRecord,
   ANTState,
-  ArIO,
-  ArIOState,
+  AoIORead,
+  IO,
   RemoteContract,
 } from '@ar.io/sdk/node';
 import pLimit from 'p-limit';
@@ -32,11 +32,8 @@ import { ContractTxId } from './types.js';
 
 let lastEvaluationTimestamp: number | undefined;
 export const getLastEvaluatedTimestamp = () => lastEvaluationTimestamp;
-export const contract = ArIO.init({
-  contract: new RemoteContract<ArIOState>({
-    contractTxId: config.CONTRACT_ID,
-    cacheUrl: config.CONTRACT_CACHE_URL,
-  }),
+export const contract: AoIORead = IO.init({
+  processId: config.IO_PROCESS_ID,
 });
 
 // TODO: this could be done using any KV store - or in memory. For now, we are using LMDB for persistence.
@@ -56,8 +53,9 @@ export async function evaluateArNSNames() {
     count: Object.keys(apexRecords).length,
   });
 
-  // get all the unique contract tx ids
+  // get all the unique process ids on the contract
   const contractTxIds: Set<string> = new Set(
+    // TODO: replace with process ids
     Object.values(apexRecords).map((record) => record.contractTxId),
   );
 
@@ -69,6 +67,7 @@ export async function evaluateArNSNames() {
   await Promise.all(
     [...contractTxIds].map((contractTxId) => {
       return parallelLimit(async () => {
+        // TODO: replace with ao processes configuration
         const antContract = ANT.init({
           contract: new RemoteContract<ANTState>({
             contractTxId,

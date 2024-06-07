@@ -17,7 +17,9 @@
  */
 import dotenv from 'dotenv';
 
+
 import * as env from './lib/env.js';
+
 
 dotenv.config();
 
@@ -37,6 +39,10 @@ export const CONTRACT_CACHE_URL = env.varOrDefault(
 export const CONTRACT_ID = env.varOrDefault(
   'CONTRACT_ID',
   'bLAgYxAdX2Ry-nt6aH2ixgvJXbpsEYm28NgJgyqfs-U',
+);
+export const IO_PROCESS_ID = env.varOrDefault(
+  'IO_PROCESS_ID',
+  'GaQrvEMKBpkjofgnBi_B3IgIDmY_XYelVLB6GcRGrHc',
 );
 export const ARNS_CACHE_PATH = env.varOrDefault(
   'ARNS_CACHE_PATH',
