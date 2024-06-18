@@ -67,7 +67,6 @@ export async function evaluateArNSNames() {
   await Promise.all(
     [...processIds].map((processId: string) => {
       return parallelLimit(async () => {
-        // TODO: replace with ao processes configuration
         const antContract = ANT.init({
           processId,
         });
