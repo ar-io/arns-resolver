@@ -18,17 +18,16 @@
 import {
   ANT,
   ANTRecord,
-  ANTState,
   AoIORead,
+  ArNSLeaseData,
   IO,
-  RemoteContract,
+  ProcessId,
 } from '@ar.io/sdk/node';
 import pLimit from 'p-limit';
 
 import { LmdbKVStore } from './cache/lmdb-kv-store.js';
 import * as config from './config.js';
 import log from './log.js';
-import { ContractTxId } from './types.js';
 
 let lastEvaluationTimestamp: number | undefined;
 export const getLastEvaluatedTimestamp = () => lastEvaluationTimestamp;
@@ -54,39 +53,37 @@ export async function evaluateArNSNames() {
   });
 
   // get all the unique process ids on the contract
-  const contractTxIds: Set<string> = new Set(
-    // TODO: replace with process ids
-    Object.values(apexRecords).map((record) => record.contractTxId),
+  const processIds: Set<string> = new Set(
+    Object.values(apexRecords)
+      .map((record) => record.processId)
+      .filter((id) => id !== undefined),
   );
 
   // create a map of the contract records and use concurrency to fetch their records
-  const contractRecordMap: Record<
-    ContractTxId,
+  const processRecordMap: Record<
+    ProcessId,
     { owner: string | undefined; records: Record<string, ANTRecord> }
   > = {};
   await Promise.all(
-    [...contractTxIds].map((contractTxId) => {
+    [...processIds].map((processId: string) => {
       return parallelLimit(async () => {
         // TODO: replace with ao processes configuration
         const antContract = ANT.init({
-          contract: new RemoteContract<ANTState>({
-            contractTxId,
-            cacheUrl: config.CONTRACT_CACHE_URL,
-          }),
+          processId,
         });
         const antRecords = await antContract.getRecords().catch((err: any) => {
           log.debug('Failed to get records for contract', {
-            contractTxId,
+            processId,
             error: err,
           });
           return {};
         });
 
         if (Object.keys(antRecords).length) {
-          contractRecordMap[contractTxId] = {
+          processRecordMap[processId] = {
             owner: await antContract.getOwner().catch((err: any) => {
               log.debug('Failed to get owner for contract', {
-                contractTxId,
+                processId,
                 error: err,
               });
               return undefined;
@@ -98,32 +95,32 @@ export async function evaluateArNSNames() {
     }),
   );
 
-  log.info('Retrieved contract tx ids assigned to records:', {
-    contractCount: Object.keys(contractRecordMap).length,
+  log.info('Retrieved process ids assigned to records:', {
+    processCount: Object.keys(processRecordMap).length,
   });
 
   // filter out any records associated with an invalid contract
   const validArNSRecords = Object.entries(apexRecords).filter(
-    ([_, record]) => record.contractTxId in contractRecordMap,
+    ([_, record]) => record.processId in processRecordMap,
   );
 
   const insertPromises = [];
 
   // now go through all the record names and assign them to the resolved tx ids
   for (const [apexName, apexRecordData] of validArNSRecords) {
-    const antData = contractRecordMap[apexRecordData.contractTxId];
+    const antData = processRecordMap[apexRecordData.processId];
     // TODO: current complexity is O(n^2) - we can do better by flattening records above before this loop
     for (const [antName, antRecordData] of Object.entries(antData.records)) {
       const resolvedRecordObj = {
-        ttlSeconds:
-          antRecordData.ttlSeconds || config.EVALUATION_INTERVAL_MS / 1000,
-        // TODO: deprecate support for legacy ANTs
-        txId: antRecordData.transactionId ?? antRecordData,
-        contractTxId: apexRecordData.contractTxId,
+        ttlSeconds: antRecordData.ttlSeconds,
+        txId: antRecordData.transactionId,
+        processId: apexRecordData.processId,
         type: apexRecordData.type,
         owner: antData.owner,
         ...(apexRecordData.type === 'lease' && {
-          endTimestamp: apexRecordData.endTimestamp,
+          // TODO: provide utility in SDK to get lease data
+          endTimestamp: (apexRecordData as unknown as ArNSLeaseData)
+            .endTimestamp,
         }),
       };
       const resolvedRecordBuffer = Buffer.from(

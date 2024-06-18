@@ -80,8 +80,7 @@ app.get('/ar-io/resolver/healthcheck', async (_req, res) => {
 
 app.get('/ar-io/resolver/info', (_req, res) => {
   res.status(200).send({
-    contractId: config.CONTRACT_ID,
-    cacheUrl: config.CONTRACT_CACHE_URL,
+    processId: config.IO_PROCESS_ID,
     lastEvaluationTimestamp: getLastEvaluatedTimestamp(),
   });
 });

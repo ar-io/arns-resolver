@@ -33,8 +33,7 @@ components:
     Info:
       type: object
       properties:
-        cacheUrl: { '$ref': '#/components/schemas/URL' }
-        contractTxId: { '$ref': '#/components/schemas/ArweaveId' }
+        processId: { '$ref': '#/components/schemas/ArweaveId' }
         lastEvaluationTimestamp: { '$ref': '#/components/schemas/Timestamp' }
     Record:
       type: object
@@ -44,7 +43,7 @@ components:
         txId: { $ref: '#/components/schemas/ArweaveId' }
         endTimestamp: { '$ref': '#/components/schemas/Timestamp' }
         owner: { $ref: '#/components/schemas/ArweaveAddress' }
-        contractTxId: { $ref: '#/components/schemas/ArweaveId' }
+        processId: { $ref: '#/components/schemas/ArweaveId' }
         type: { type: string }
 
 paths:
