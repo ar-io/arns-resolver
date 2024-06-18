@@ -87,6 +87,7 @@ app.get('/ar-io/resolver/info', (_req, res) => {
 
 app.get('/ar-io/resolver/records/:name', async (req, res) => {
   try {
+    // TODO: use barrier synchronization to prevent multiple requests for the same record
     log.debug('Checking cache for record', { name: req.params.name });
     const resolvedRecordData = await cache.get(req.params.name);
     if (!resolvedRecordData) {

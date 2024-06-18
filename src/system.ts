@@ -15,19 +15,15 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import {
-  ANT,
-  ANTRecord,
-  AoIORead,
-  IO,
-  ProcessId,
-  isLeasedArNSRecord,
-} from '@ar.io/sdk/node';
+import { ANT, ANTRecord, AoIORead, IO, ProcessId, isLeasedArNSRecord } from '@ar.io/sdk/node';
 import pLimit from 'p-limit';
+
+
 
 import { LmdbKVStore } from './cache/lmdb-kv-store.js';
 import * as config from './config.js';
 import log from './log.js';
+
 
 let lastEvaluationTimestamp: number | undefined;
 export const getLastEvaluatedTimestamp = () => lastEvaluationTimestamp;
@@ -94,7 +90,7 @@ export async function evaluateArNSNames() {
     }),
   );
 
-  log.info('Retrieved process ids assigned to records:', {
+  log.info('Retrieved unique process ids assigned to records:', {
     processCount: Object.keys(processRecordMap).length,
   });
 
@@ -109,7 +105,7 @@ export async function evaluateArNSNames() {
   for (const [apexName, apexRecordData] of validArNSRecords) {
     const antData = processRecordMap[apexRecordData.processId];
     // TODO: current complexity is O(n^2) - we can do better by flattening records above before this loop
-    for (const [antName, antRecordData] of Object.entries(antData.records)) {
+    for (const [undername, antRecordData] of Object.entries(antData.records)) {
       const resolvedRecordObj = {
         ttlSeconds: antRecordData.ttlSeconds,
         txId: antRecordData.transactionId,
@@ -125,7 +121,14 @@ export async function evaluateArNSNames() {
       const resolvedRecordBuffer = Buffer.from(
         JSON.stringify(resolvedRecordObj),
       );
-      const cacheKey = antName === '@' ? apexName : `${antName}_${apexName}`;
+      const cacheKey =
+        undername === '@' ? apexName : `${undername}_${apexName}`;
+      log.debug('Inserting resolved record data into cache', {
+        apexName,
+        undername,
+        resolvedName: cacheKey,
+        txId: antRecordData.transactionId,
+      });
       // all inserts will get a ttl based on the cache configuration
       const promise = cache.set(cacheKey, resolvedRecordBuffer).catch((err) => {
         log.error('Failed to set record in cache', {
