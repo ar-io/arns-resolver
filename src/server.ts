@@ -108,7 +108,7 @@ app.get('/ar-io/resolver/records/:name', async (req, res) => {
         'Cache-Control': `public, max-age=${recordData.ttlSeconds}`,
         'Content-Type': 'application/json',
         'X-ArNS-Resolved-Id': recordData.txId,
-        'X-ArNS-Ttl-Seconds': new Date().toISOString(),
+        'X-ArNS-Ttl-Seconds': recordData.ttlSeconds,
       })
       .json({
         ...recordData,
