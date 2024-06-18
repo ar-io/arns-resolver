@@ -68,6 +68,25 @@ paths:
               schema:
                 '$ref': '#/components/schemas/Info'
   '/ar-io/resolver/records/{name}':
+    head:
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+          description: |-
+            The name of the record to resolve
+      responses:
+        '200':
+          description: |-
+            200 response
+        '404':
+          description: |-
+            404 response
+        '500':
+          description: |-
+            500 response
     get:
       responses:
         '200':
