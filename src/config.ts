@@ -25,19 +25,9 @@ export const EVALUATION_INTERVAL_MS = +env.varOrDefault(
   'EVALUATION_INTERVAL_MS',
   `${1000 * 60 * 15}`, // 15 mins by default
 );
-
 export const RUN_RESOLVER = env.varOrDefault('RUN_RESOLVER', 'true') === 'true';
 export const ENABLE_OPENAPI_VALIDATION =
   env.varOrDefault('ENABLE_OPENAPI_VALIDATION', 'true') === 'true';
-
-export const CONTRACT_CACHE_URL = env.varOrDefault(
-  'CONTRACT_CACHE_URL',
-  'https://api.arns.app',
-);
-export const CONTRACT_ID = env.varOrDefault(
-  'CONTRACT_ID',
-  'bLAgYxAdX2Ry-nt6aH2ixgvJXbpsEYm28NgJgyqfs-U',
-);
 export const IO_PROCESS_ID = env.varOrDefault(
   'IO_PROCESS_ID',
   'GaQrvEMKBpkjofgnBi_B3IgIDmY_XYelVLB6GcRGrHc',
