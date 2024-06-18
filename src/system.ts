@@ -19,9 +19,9 @@ import {
   ANT,
   ANTRecord,
   AoIORead,
-  ArNSLeaseData,
   IO,
   ProcessId,
+  isLeasedArNSRecord,
 } from '@ar.io/sdk/node';
 import pLimit from 'p-limit';
 
@@ -116,11 +116,11 @@ export async function evaluateArNSNames() {
         processId: apexRecordData.processId,
         type: apexRecordData.type,
         owner: antData.owner,
-        ...(apexRecordData.type === 'lease' && {
-          // TODO: provide utility in SDK to get lease data
-          endTimestamp: (apexRecordData as unknown as ArNSLeaseData)
-            .endTimestamp,
-        }),
+        ...(isLeasedArNSRecord(apexRecordData)
+          ? {
+              endTimestamp: apexRecordData.endTimestamp,
+            }
+          : {}),
       };
       const resolvedRecordBuffer = Buffer.from(
         JSON.stringify(resolvedRecordObj),
