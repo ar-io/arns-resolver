@@ -30,7 +30,7 @@ export const ENABLE_OPENAPI_VALIDATION =
   env.varOrDefault('ENABLE_OPENAPI_VALIDATION', 'true') === 'true';
 export const IO_PROCESS_ID = env.varOrDefault(
   'IO_PROCESS_ID',
-  'GaQrvEMKBpkjofgnBi_B3IgIDmY_XYelVLB6GcRGrHc',
+  'agYcCFJtrMG6cqMuZfskIkFTGvUPddICmtQSBIoPdiA',
 );
 export const ARNS_CACHE_PATH = env.varOrDefault(
   'ARNS_CACHE_PATH',
