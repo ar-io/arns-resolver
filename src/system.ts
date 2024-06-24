@@ -73,7 +73,8 @@ export async function evaluateArNSNames() {
         const antRecords = await antContract.getRecords().catch((err: any) => {
           log.debug('Failed to get records for contract', {
             processId,
-            error: err,
+            error: err?.message,
+            stack: err?.stack,
           });
           return {};
         });
@@ -83,7 +84,8 @@ export async function evaluateArNSNames() {
             owner: await antContract.getOwner().catch((err: any) => {
               log.debug('Failed to get owner for contract', {
                 processId,
-                error: err,
+                error: err?.message,
+                stack: err?.stack,
               });
               return undefined;
             }),
@@ -137,7 +139,8 @@ export async function evaluateArNSNames() {
       const promise = cache.set(cacheKey, resolvedRecordBuffer).catch((err) => {
         log.error('Failed to set record in cache', {
           cacheKey,
-          error: err,
+          error: err?.message,
+          stack: err?.stack,
         });
       });
       insertPromises.push(promise);
