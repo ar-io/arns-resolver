@@ -28,6 +28,7 @@ import pLimit from 'p-limit';
 import { LmdbKVStore } from './cache/lmdb-kv-store.js';
 import * as config from './config.js';
 import log from './log.js';
+import { ArNSResolvedData } from './types.js';
 
 let lastEvaluationTimestamp: number | undefined;
 export const getLastEvaluatedTimestamp = () => lastEvaluationTimestamp;
@@ -112,7 +113,7 @@ export async function evaluateArNSNames() {
     const antData = processRecordMap[apexRecordData.processId];
     // TODO: current complexity is O(n^2) - we can do better by flattening records above before this loop
     for (const [undername, antRecordData] of Object.entries(antData.records)) {
-      const resolvedRecordObj = {
+      const resolvedRecordObj: ArNSResolvedData = {
         ttlSeconds: antRecordData.ttlSeconds,
         txId: antRecordData.transactionId,
         processId: apexRecordData.processId,
@@ -133,6 +134,7 @@ export async function evaluateArNSNames() {
         apexName,
         undername,
         resolvedName: cacheKey,
+        processId: apexRecordData.processId,
         txId: antRecordData.transactionId,
       });
       // all inserts will get a ttl based on the cache configuration
