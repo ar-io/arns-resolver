@@ -22,3 +22,11 @@ export type KVBufferStore = {
   del(key: string): Promise<void>;
   has(key: string): Promise<boolean>;
 };
+export type ArNSResolvedData = {
+  ttlSeconds: number;
+  txId: string;
+  processId: string;
+  type: 'lease' | 'permabuy';
+  owner?: string;
+  endTimestamp?: number;
+};

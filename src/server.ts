@@ -25,6 +25,7 @@ import YAML from 'yaml';
 import * as config from './config.js';
 import log from './log.js';
 import { cache, getLastEvaluatedTimestamp } from './system.js';
+import { ArNSResolvedData } from './types.js';
 
 // HTTP server
 export const app = express();
@@ -93,7 +94,9 @@ app.head('/ar-io/resolver/records/:name', async (req, res) => {
       res.status(404).send();
       return;
     }
-    const recordData = JSON.parse(resolvedRecordData.toString());
+    const recordData: ArNSResolvedData = JSON.parse(
+      resolvedRecordData.toString(),
+    );
     res
       .status(200)
       .set({
@@ -101,6 +104,7 @@ app.head('/ar-io/resolver/records/:name', async (req, res) => {
         'Content-Type': 'application/json',
         'X-ArNS-Resolved-Id': recordData.txId,
         'X-ArNS-Ttl-Seconds': recordData.ttlSeconds,
+        'X-ArNS-Process-Id': recordData.processId,
       })
       .send();
   } catch (err: any) {
@@ -124,7 +128,9 @@ app.get('/ar-io/resolver/records/:name', async (req, res) => {
       });
       return;
     }
-    const recordData = JSON.parse(resolvedRecordData.toString());
+    const recordData: ArNSResolvedData = JSON.parse(
+      resolvedRecordData.toString(),
+    );
     log.debug('Successfully fetched record from cache', {
       name: req.params.name,
       txId: recordData.txId,
@@ -137,6 +143,7 @@ app.get('/ar-io/resolver/records/:name', async (req, res) => {
         'Content-Type': 'application/json',
         'X-ArNS-Resolved-Id': recordData.txId,
         'X-ArNS-Ttl-Seconds': recordData.ttlSeconds,
+        'X-ArNS-Process-Id': recordData.processId,
       })
       .json({
         ...recordData,
