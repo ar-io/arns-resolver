@@ -25,6 +25,10 @@ export const EVALUATION_INTERVAL_MS = +env.varOrDefault(
   'EVALUATION_INTERVAL_MS',
   `${1000 * 60 * 15}`, // 15 mins by default
 );
+export const RESOLVER_CACHE_TTL_MS = +env.varOrDefault(
+  'RESOLVER_CACHE_TTL_MS',
+  `${1000 * 60 * 60}`, // 1 hour by default
+);
 export const RUN_RESOLVER = env.varOrDefault('RUN_RESOLVER', 'true') === 'true';
 export const ENABLE_OPENAPI_VALIDATION =
   env.varOrDefault('ENABLE_OPENAPI_VALIDATION', 'true') === 'true';
