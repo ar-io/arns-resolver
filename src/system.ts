@@ -185,8 +185,9 @@ export async function evaluateArNSNames() {
     );
     log.info('Finished evaluating arns names', {
       durationMs: Date.now() - startTime,
-      apexRecordCount: validArNSRecords.length,
+      apexRecordCount: Object.keys(apexRecords).length,
       evaluatedRecordCount: successfulEvaluationCount,
+      evaluatedProcessCount: Object.keys(processRecordMap).length,
       failedProcessCount:
         processIds.size - Object.keys(processRecordMap).length,
     });

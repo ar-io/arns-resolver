@@ -96,15 +96,6 @@ paths:
                 type: object
                 properties:
                   message: { type: string }
-        '400':
-          description: |-
-            400 response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message: { type: string }
         '401':
           description: |-
             401 response
