@@ -40,7 +40,7 @@ export const contract: AoIORead = IO.init({
 // TODO: this could be done using any KV store - or in memory. For now, we are using LMDB for persistence.
 export const cache = new LmdbKVStore({
   dbPath: config.ARNS_CACHE_PATH,
-  ttlSeconds: config.RESOLVER_CACHE_TTL_MS / 1000,
+  ttlSeconds: config.ARNS_CACHE_TTL_MS / 1000,
 });
 
 const parallelLimit = pLimit(100);
