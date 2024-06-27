@@ -24,7 +24,13 @@ import YAML from 'yaml';
 
 import * as config from './config.js';
 import log from './log.js';
-import { cache, getLastEvaluatedTimestamp } from './system.js';
+import { adminMiddleware } from './middleware.js';
+import {
+  cache,
+  evaluateArNSNames,
+  getLastEvaluatedTimestamp,
+  isEvaluationInProgress,
+} from './system.js';
 import { ArNSResolvedData } from './types.js';
 
 // HTTP server
@@ -84,6 +90,24 @@ app.get('/ar-io/resolver/info', (_req, res) => {
     processId: config.IO_PROCESS_ID,
     lastEvaluationTimestamp: getLastEvaluatedTimestamp(),
   });
+});
+
+app.post('/ar-io/resolver/admin/evaluate', adminMiddleware, (_req, res) => {
+  // TODO: we could support post request to trigger evaluation for specific names rather than re-evaluate everything
+  if (isEvaluationInProgress()) {
+    res.status(202).send({
+      message: 'Evaluation in progress',
+    });
+  } else {
+    log.info('Evaluation triggered by request', {
+      processId: config.IO_PROCESS_ID,
+    });
+    evaluateArNSNames(); // don't await
+    res.status(200).send({
+      message: 'Evaluation triggered',
+      processId: config.IO_PROCESS_ID,
+    });
+  }
 });
 
 app.head('/ar-io/resolver/records/:name', async (req, res) => {

@@ -33,6 +33,7 @@ import { ArNSResolvedData } from './types.js';
 let lastEvaluationTimestamp: number | undefined;
 let evaluationInProgress = false;
 export const getLastEvaluatedTimestamp = () => lastEvaluationTimestamp;
+export const isEvaluationInProgress = () => evaluationInProgress;
 export const contract: AoIORead = IO.init({
   processId: config.IO_PROCESS_ID,
 });
@@ -179,6 +180,7 @@ export async function evaluateArNSNames() {
     );
     log.info('Successfully evaluated arns names', {
       durationMs: Date.now() - startTime,
+      recordCount: validArNSRecords.length,
     });
     lastEvaluationTimestamp = Date.now();
   } catch (err: any) {

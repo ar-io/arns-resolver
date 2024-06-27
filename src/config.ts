@@ -21,6 +21,8 @@ import * as env from './lib/env.js';
 
 dotenv.config();
 
+export const ADMIN_API_KEY = env.varOrRandom('ADMIN_API_KEY');
+
 export const EVALUATION_INTERVAL_MS = +env.varOrDefault(
   'EVALUATION_INTERVAL_MS',
   `${1000 * 60 * 15}`, // 15 mins by default

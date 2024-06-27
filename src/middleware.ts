@@ -15,26 +15,20 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import crypto from 'node:crypto';
+import { NextFunction, Request, Response } from 'express';
 
-import log from '../log.js';
+import * as config from './config.js';
 
-export function varOrDefault(envVarName: string, defaultValue: string): string {
-  const value = process.env[envVarName];
-  return value !== undefined && value.trim() !== '' ? value : defaultValue;
-}
-
-export function varOrUndefined(envVarName: string): string | undefined {
-  const value = process.env[envVarName];
-  return value !== undefined && value.trim() !== '' ? value : undefined;
-}
-
-export function varOrRandom(envVarName: string): string {
-  const value = process.env[envVarName];
-  if (value === undefined) {
-    const value = crypto.randomBytes(32).toString('base64url');
-    log.info(`${envVarName} not provided, generated random value: ${value}`);
-    return value;
+export const adminMiddleware = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  if (req.headers['authorization'] !== `Bearer ${config.ADMIN_API_KEY}`) {
+    res.status(401).send({
+      message: 'Unauthorized',
+    });
+    return;
   }
-  return value;
-}
+  next();
+};
