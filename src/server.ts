@@ -40,7 +40,7 @@ export const app = express();
 app.use(
   cors({
     origin: '*',
-    methods: ['GET', 'HEAD'],
+    methods: ['GET', 'HEAD', 'POST'],
   }),
 );
 
