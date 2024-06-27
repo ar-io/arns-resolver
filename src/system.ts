@@ -129,7 +129,6 @@ export async function evaluateArNSNames() {
       ([_, record]) => record.processId in processRecordMap,
     );
 
-    let totalRecordCount = 0;
     let successfulEvaluationCount = 0;
 
     const insertPromises = [];
@@ -176,7 +175,6 @@ export async function evaluateArNSNames() {
             });
           });
         insertPromises.push(promise);
-        totalRecordCount++;
       }
     }
     // use pLimit to prevent overwhelming cache
