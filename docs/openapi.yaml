@@ -84,10 +84,9 @@ paths:
           content:
             application/json:
               schema:
-                    type: object
-                    properties:
-                      message: { type: string }
-                      processId: { $ref: '#/components/schemas/ArweaveId' }
+                type: object
+                properties:
+                  message: { type: string }
         '202':
           description: |-
             202 response

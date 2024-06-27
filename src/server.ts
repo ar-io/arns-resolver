@@ -105,7 +105,6 @@ app.post('/ar-io/resolver/admin/evaluate', adminMiddleware, (_req, res) => {
     evaluateArNSNames(); // don't await
     res.status(200).send({
       message: 'Evaluation triggered',
-      processId: config.IO_PROCESS_ID,
     });
   }
 });
