@@ -6,6 +6,12 @@ info:
   description: |
     AR.IO ArNS Resolver
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: apiToken
+      description: ADMIN_API_KEY set in your .env file.
   schemas:
     ArweaveAddress:
       type: string
@@ -67,6 +73,47 @@ paths:
             application/json:
               schema:
                 '$ref': '#/components/schemas/Info'
+  '/ar-io/resolver/admin/evaluate':
+    post:
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: |-
+            200 response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+        '202':
+          description: |-
+            202 response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+        '401':
+          description: |-
+            401 response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+        '500':
+          description: |-
+            500 response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: { type: string }
   '/ar-io/resolver/records/{name}':
     head:
       parameters:

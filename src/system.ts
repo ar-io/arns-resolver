@@ -33,6 +33,7 @@ import { ArNSResolvedData } from './types.js';
 let lastEvaluationTimestamp: number | undefined;
 let evaluationInProgress = false;
 export const getLastEvaluatedTimestamp = () => lastEvaluationTimestamp;
+export const isEvaluationInProgress = () => evaluationInProgress;
 export const contract: AoIORead = IO.init({
   processId: config.IO_PROCESS_ID,
 });
@@ -75,7 +76,7 @@ export async function evaluateArNSNames() {
     );
 
     log.debug('Identified unique process ids assigned to records:', {
-      recordCount: Object.keys(apexRecords).length,
+      apexRecordCount: Object.keys(apexRecords).length,
       processCount: processIds.size,
     });
 
@@ -120,12 +121,15 @@ export async function evaluateArNSNames() {
 
     log.info('Retrieved unique process ids assigned to records:', {
       processCount: Object.keys(processRecordMap).length,
+      apexRecordCount: Object.keys(apexRecords).length,
     });
 
     // filter out any records associated with an invalid contract
     const validArNSRecords = Object.entries(apexRecords).filter(
       ([_, record]) => record.processId in processRecordMap,
     );
+
+    let successfulEvaluationCount = 0;
 
     const insertPromises = [];
 
@@ -175,10 +179,17 @@ export async function evaluateArNSNames() {
     }
     // use pLimit to prevent overwhelming cache
     await Promise.all(
-      insertPromises.map((promise) => parallelLimit(() => promise)),
+      insertPromises.map((promise) =>
+        parallelLimit(() => promise.then(() => successfulEvaluationCount++)),
+      ),
     );
-    log.info('Successfully evaluated arns names', {
+    log.info('Finished evaluating arns names', {
       durationMs: Date.now() - startTime,
+      apexRecordCount: Object.keys(apexRecords).length,
+      evaluatedRecordCount: successfulEvaluationCount,
+      evaluatedProcessCount: Object.keys(processRecordMap).length,
+      failedProcessCount:
+        processIds.size - Object.keys(processRecordMap).length,
     });
     lastEvaluationTimestamp = Date.now();
   } catch (err: any) {
