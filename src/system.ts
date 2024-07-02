@@ -15,20 +15,16 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import {
-  ANT,
-  ANTRecord,
-  AoIORead,
-  IO,
-  ProcessId,
-  isLeasedArNSRecord,
-} from '@ar.io/sdk/node';
+import { ANT, ANTRecord, AoIORead, IO, ProcessId, isLeasedArNSRecord } from '@ar.io/sdk/node';
 import pLimit from 'p-limit';
+
+
 
 import { LmdbKVStore } from './cache/lmdb-kv-store.js';
 import * as config from './config.js';
 import log from './log.js';
 import { ArNSResolvedData } from './types.js';
+
 
 let lastEvaluationTimestamp: number | undefined;
 let evaluationInProgress = false;
@@ -203,3 +199,23 @@ export async function evaluateArNSNames() {
 
   return;
 }
+
+
+// Exception Handlers
+
+process.on('uncaughtException', (error: any) => {
+  log.error('Uncaught exception!', {
+    error: error?.message,
+    stack: error?.stack,
+  });
+});
+
+process.on('SIGTERM', () => {
+  log.info('SIGTERM received, exiting...');
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  log.info('SIGINT received, exiting...');
+  process.exit(0);
+});
