@@ -15,16 +15,20 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import { ANT, ANTRecord, AoIORead, IO, ProcessId, isLeasedArNSRecord } from '@ar.io/sdk/node';
+import {
+  ANT,
+  ANTRecord,
+  AoIORead,
+  IO,
+  ProcessId,
+  isLeasedArNSRecord,
+} from '@ar.io/sdk/node';
 import pLimit from 'p-limit';
-
-
 
 import { LmdbKVStore } from './cache/lmdb-kv-store.js';
 import * as config from './config.js';
 import log from './log.js';
 import { ArNSResolvedData } from './types.js';
-
 
 let lastEvaluationTimestamp: number | undefined;
 let evaluationInProgress = false;
@@ -199,7 +203,6 @@ export async function evaluateArNSNames() {
 
   return;
 }
-
 
 // Exception Handlers
 
