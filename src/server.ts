@@ -109,37 +109,6 @@ app.post('/ar-io/resolver/admin/evaluate', adminMiddleware, (_req, res) => {
   }
 });
 
-app.head('/ar-io/resolver/records/:name', async (req, res) => {
-  try {
-    log.debug('Checking cache for record', { name: req.params.name });
-    const resolvedRecordData = await cache.get(req.params.name);
-    if (!resolvedRecordData) {
-      res.status(404).send();
-      return;
-    }
-    const recordData: ArNSResolvedData = JSON.parse(
-      resolvedRecordData.toString(),
-    );
-    res
-      .status(200)
-      .set({
-        'Cache-Control': `public, max-age=${recordData.ttlSeconds}`,
-        'Content-Type': 'application/json',
-        'X-ArNS-Resolved-Id': recordData.txId,
-        'X-ArNS-Ttl-Seconds': recordData.ttlSeconds,
-        'X-ArNS-Process-Id': recordData.processId,
-      })
-      .send();
-  } catch (err: any) {
-    log.error('Failed to check for record', {
-      name: req.params.name,
-      message: err?.message,
-      stack: err?.stack,
-    });
-    res.status(500).send();
-  }
-});
-
 app.get('/ar-io/resolver/records/:name', async (req, res) => {
   try {
     // TODO: use barrier synchronization to prevent multiple requests for the same record
