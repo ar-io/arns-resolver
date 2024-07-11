@@ -21,6 +21,7 @@ import {
   AoIORead,
   IO,
   ProcessId,
+  fetchAllArNSRecords,
   isLeasedArNSRecord,
 } from '@ar.io/sdk/node';
 import pLimit from 'p-limit';
@@ -63,7 +64,10 @@ export async function evaluateArNSNames() {
 
     // monitor the time it takes to evaluate the names
     const startTime = Date.now();
-    const apexRecords = await contract.getArNSRecords();
+    const apexRecords = await fetchAllArNSRecords({
+      contract,
+    });
+
     log.info('Retrieved apex records:', {
       count: Object.keys(apexRecords).length,
     });
