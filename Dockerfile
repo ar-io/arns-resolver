@@ -7,7 +7,7 @@ FROM node:${NODE_VERSION}-bullseye-slim AS builder
 WORKDIR /app
 COPY . .
 RUN yarn --ignore-engines && yarn build
-RUN rm-rf node_modules & yarn install --force 
+RUN rm-rf node_modules & yarn install --force --ignore-engines
 
 # Runtime
 FROM gcr.io/distroless/nodejs${NODE_VERSION_SHORT}-debian11
