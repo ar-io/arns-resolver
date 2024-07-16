@@ -43,3 +43,10 @@ export const ARNS_CACHE_PATH = env.varOrDefault(
   './data/arns',
 );
 export const PORT = +env.varOrDefault('PORT', '6000');
+
+// AO
+
+export const AO_MU_URL = env.varOrUndefined('AO_MU_URL');
+export const AO_CU_URL = env.varOrUndefined('AO_CU_URL');
+export const AO_GRAPHQL_URL = env.varOrUndefined('AO_GRAPHQL_URL');
+export const AO_GATEWAY_URL = env.varOrUndefined('AO_GATEWAY_URL');
