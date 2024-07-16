@@ -6,7 +6,7 @@ FROM node:${NODE_VERSION}-bullseye-slim AS builder
 # Build
 WORKDIR /app
 COPY . .
-RUN yarn && yarn build
+RUN yarn --ignore-engines && yarn build
 RUN rm-rf node_modules & yarn install --force 
 
 # Runtime
