@@ -18,12 +18,14 @@
 import {
   ANT,
   ANTRecord,
+  AOProcess,
   AoIORead,
   IO,
   ProcessId,
   fetchAllArNSRecords,
   isLeasedArNSRecord,
 } from '@ar.io/sdk/node';
+import { connect } from '@permaweb/aoconnect';
 import pLimit from 'p-limit';
 
 import { LmdbKVStore } from './cache/lmdb-kv-store.js';
@@ -36,7 +38,16 @@ let evaluationInProgress = false;
 export const getLastEvaluatedTimestamp = () => lastEvaluationTimestamp;
 export const isEvaluationInProgress = () => evaluationInProgress;
 export const contract: AoIORead = IO.init({
-  processId: config.IO_PROCESS_ID,
+  process: new AOProcess({
+    processId: config.IO_PROCESS_ID,
+    ao: connect({
+      // @permaweb/aoconnect defaults will be used if these are not provided
+      MU_URL: config.AO_MU_URL,
+      CU_URL: config.AO_CU_URL,
+      GRAPHQL_URL: config.AO_GATEWAY_URL,
+      GATEWAY_URL: config.AO_GATEWAY_URL,
+    }),
+  }),
 });
 
 // TODO: this could be done using any KV store - or in memory. For now, we are using LMDB for persistence.
