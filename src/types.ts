@@ -18,9 +18,10 @@
 export type RecordTxId = string;
 export type KVBufferStore = {
   get(key: string): Promise<Buffer | undefined>;
-  set(key: string, buffer: Buffer): Promise<void>;
+  set(key: string, buffer: Buffer, ttlSeconds?: number): Promise<void>;
   del(key: string): Promise<void>;
   has(key: string): Promise<boolean>;
+  close(): Promise<void>;
 };
 export type ArNSResolvedData = {
   ttlSeconds: number;

@@ -31,6 +31,11 @@ export const ARNS_CACHE_TTL_MS = +env.varOrDefault(
   'ARNS_CACHE_TTL_MS',
   `${1000 * 60 * 60}`, // 1 hour by default
 );
+export const ARNS_CACHE_TYPE = env.varOrDefault('ARNS_CACHE_TYPE', 'lmdb');
+export const REDIS_CACHE_URL = env.varOrDefault(
+  'REDIS_CACHE_URL',
+  'redis://localhost:6379',
+);
 export const RUN_RESOLVER = env.varOrDefault('RUN_RESOLVER', 'true') === 'true';
 export const ENABLE_OPENAPI_VALIDATION =
   env.varOrDefault('ENABLE_OPENAPI_VALIDATION', 'true') === 'true';

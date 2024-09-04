@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        step: ['lint:check', 'build']
+        step: ['lint:check', 'build', "test"]
     steps:
       - uses: actions/checkout@v4
       - name: Setup yarn

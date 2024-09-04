@@ -18,15 +18,9 @@
 import * as config from './config.js';
 import log from './log.js';
 import { app } from './server.js';
-import { evaluateArNSNames } from './system.js';
 
 if (config.RUN_RESOLVER) {
-  // set the evaluation to run at the configured interval
-  setInterval(evaluateArNSNames, config.EVALUATION_INTERVAL_MS);
-
   app.listen(config.PORT, () => {
     log.info(`Listening on port ${config.PORT}`);
   });
-
-  evaluateArNSNames();
 }

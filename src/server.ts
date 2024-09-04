@@ -15,6 +15,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+import { ANT, AOProcess } from '@ar.io/sdk/node';
+import { connect } from '@permaweb/aoconnect';
 import cors from 'cors';
 import express from 'express';
 import * as OpenApiValidator from 'express-openapi-validator';
@@ -24,13 +26,7 @@ import YAML from 'yaml';
 
 import * as config from './config.js';
 import log from './log.js';
-import { adminMiddleware } from './middleware.js';
-import {
-  cache,
-  evaluateArNSNames,
-  getLastEvaluatedTimestamp,
-  isEvaluationInProgress,
-} from './system.js';
+import { cache, contract } from './system.js';
 import { ArNSResolvedData } from './types.js';
 
 // HTTP server
@@ -88,62 +84,103 @@ app.get('/ar-io/resolver/healthcheck', async (_req, res) => {
 app.get('/ar-io/resolver/info', (_req, res) => {
   res.status(200).send({
     processId: config.IO_PROCESS_ID,
-    lastEvaluationTimestamp: getLastEvaluatedTimestamp(),
   });
 });
 
-app.post('/ar-io/resolver/admin/evaluate', adminMiddleware, (_req, res) => {
-  // TODO: we could support post request to trigger evaluation for specific names rather than re-evaluate everything
-  if (isEvaluationInProgress()) {
-    res.status(202).send({
-      message: 'Evaluation in progress',
-    });
-  } else {
-    log.info('Evaluation triggered by request', {
-      processId: config.IO_PROCESS_ID,
-    });
-    evaluateArNSNames(); // don't await
-    res.status(200).send({
-      message: 'Evaluation triggered',
-    });
-  }
-});
-
 app.get('/ar-io/resolver/records/:name', async (req, res) => {
+  const arnsName = req.params.name;
+
+  // THIS IS ESSENTIALLY A READ THROUGH CACHE USING REDIS - TODO: could replace this with a resolver interface with read through logic
   try {
-    // TODO: use barrier synchronization to prevent multiple requests for the same record
-    log.debug('Checking cache for record', { name: req.params.name });
-    const resolvedRecordData = await cache.get(req.params.name);
+    const logger = log.child({ arnsName });
+    logger.debug('Checking cache for record...');
+
+    let resolvedRecordData: ArNSResolvedData | undefined;
+    const cachedNameResolution = await cache.get(arnsName);
+    if (cachedNameResolution) {
+      logger.debug('Found cached arns name resolution');
+      resolvedRecordData = JSON.parse(cachedNameResolution.toString());
+    } else {
+      logger.debug('Cache miss for arns name');
+      const apexName = arnsName.split('_').slice(-1)[0];
+      const record = await contract.getArNSRecord({ name: apexName });
+      if (!record) {
+        res.status(404).json({
+          error: 'Record not found',
+        });
+        return;
+      }
+
+      // get the ant id and use that to get the record from the cache
+      const antId = record.processId;
+      const ant = ANT.init({
+        process: new AOProcess({
+          processId: antId,
+          ao: connect({
+            MU_URL: config.AO_MU_URL,
+            CU_URL: config.AO_CU_URL,
+            GRAPHQL_URL: config.AO_GRAPHQL_URL,
+            GATEWAY_URL: config.AO_GATEWAY_URL,
+          }),
+        }),
+      });
+      const undername = arnsName.split('_').slice(0, -1).join('_') || '@';
+      const antRecord = await ant.getRecord({ undername });
+      if (!antRecord) {
+        res.status(404).json({
+          error: 'Record not found',
+        });
+        return;
+      }
+      const owner = await ant.getOwner();
+      resolvedRecordData = {
+        ttlSeconds: antRecord.ttlSeconds,
+        txId: antRecord.transactionId,
+        processId: antId,
+        type: record.type,
+        owner,
+      };
+
+      const resolvedRecordBuffer = Buffer.from(
+        JSON.stringify(resolvedRecordData),
+      );
+
+      // cache the record in the cache
+      await cache.set(
+        arnsName,
+        resolvedRecordBuffer,
+        resolvedRecordData.ttlSeconds,
+      );
+    }
+
     if (!resolvedRecordData) {
       res.status(404).json({
         error: 'Record not found',
       });
       return;
     }
-    const recordData: ArNSResolvedData = JSON.parse(
-      resolvedRecordData.toString(),
-    );
-    log.debug('Successfully fetched record from cache', {
-      name: req.params.name,
-      txId: recordData.txId,
-      ttlSeconds: recordData.ttlSeconds,
+
+    logger.debug('Successfully fetched record from cache', {
+      name: arnsName,
+      txId: resolvedRecordData.txId,
+      ttlSeconds: resolvedRecordData.ttlSeconds,
     });
     res
       .status(200)
       .set({
-        'Cache-Control': `public, max-age=${recordData.ttlSeconds}`,
+        'Cache-Control': `public, max-age=${resolvedRecordData.ttlSeconds}`,
         'Content-Type': 'application/json',
-        'X-ArNS-Resolved-Id': recordData.txId,
-        'X-ArNS-Ttl-Seconds': recordData.ttlSeconds,
-        'X-ArNS-Process-Id': recordData.processId,
+        'X-ArNS-Resolved-Id': resolvedRecordData.txId,
+        'X-ArNS-Ttl-Seconds': resolvedRecordData.ttlSeconds,
+        'X-ArNS-Process-Id': resolvedRecordData.processId,
       })
       .json({
-        ...recordData,
-        name: req.params.name,
+        ...resolvedRecordData,
+        name: arnsName,
       });
   } catch (err: any) {
     log.error('Failed to get record', {
-      name: req.params.name,
+      name: arnsName,
       message: err?.message,
       stack: err?.stack,
     });

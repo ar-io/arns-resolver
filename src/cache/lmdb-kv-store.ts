@@ -35,11 +35,14 @@ export class LmdbKVStore implements KVBufferStore {
   /**
    * Attach the TTL to the value.
    */
-  private serialize(value: Buffer): Buffer {
-    if (this.ttlSeconds === undefined) return value;
+  private serialize(
+    value: Buffer,
+    ttlSeconds: number | undefined = this.ttlSeconds,
+  ): Buffer {
+    if (ttlSeconds === undefined) return value;
     const expirationTimestamp = Buffer.allocUnsafe(8); // 8 bytes for a timestamp
     expirationTimestamp.writeBigInt64BE(
-      BigInt(Date.now() + this.ttlSeconds * 1000),
+      BigInt(Date.now() + ttlSeconds * 1000),
       0,
     );
     return Buffer.concat([expirationTimestamp, value]);
@@ -93,7 +96,11 @@ export class LmdbKVStore implements KVBufferStore {
   /**
    * Set the value in the database with the TTL.
    */
-  async set(key: string, buffer: Buffer): Promise<void> {
-    await this.db.put(key, this.serialize(buffer));
+  async set(key: string, buffer: Buffer, ttlSeconds?: number): Promise<void> {
+    await this.db.put(key, this.serialize(buffer, ttlSeconds));
+  }
+
+  async close(): Promise<void> {
+    await this.db.close();
   }
 }
