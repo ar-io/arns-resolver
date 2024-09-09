@@ -19,6 +19,7 @@ import * as promClient from 'prom-client';
 
 export const metrics = new promClient.Registry();
 
+// ARNS cache metrics
 export const arnsCacheHit = new promClient.Counter({
   name: 'arns_cache_hit',
   help: 'Number of times the ARNS cache was hit',
@@ -29,4 +30,16 @@ export const arnsCacheMiss = new promClient.Counter({
   name: 'arns_cache_miss',
   help: 'Number of times the ARNS cache was missed',
   labelNames: ['cache_type'],
+});
+
+// Redis metrics
+export const redisConnectionError = new promClient.Gauge({
+  name: 'redis_connection_error',
+  help: 'Redis connection error',
+});
+
+export const redisErrors = new promClient.Counter({
+  name: 'redis_errors',
+  help: 'Redis errors',
+  labelNames: ['error'],
 });

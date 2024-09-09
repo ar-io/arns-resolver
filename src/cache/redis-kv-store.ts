@@ -19,6 +19,7 @@ import { RedisClientType, commandOptions, createClient } from 'redis';
 import winston from 'winston';
 
 import * as config from '../config.js';
+import * as metrics from '../metrics.js';
 import { KVBufferStore } from '../types.js';
 
 export class RedisKvStore implements KVBufferStore {
@@ -45,14 +46,14 @@ export class RedisKvStore implements KVBufferStore {
         message: error.message,
         stack: error.stack,
       });
-      // TODO: add prometheus metric for redis error
+      metrics.redisErrors.inc({ error: error.message });
     });
     this.client.connect().catch((error: any) => {
       this.log.error(`Redis connection error`, {
         message: error.message,
         stack: error.stack,
       });
-      // TODO: add prometheus metric for redis connection error
+      metrics.redisConnectionError.inc();
     });
   }
 
