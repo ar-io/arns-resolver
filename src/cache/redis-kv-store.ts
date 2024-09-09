@@ -18,15 +18,25 @@
 import { RedisClientType, commandOptions, createClient } from 'redis';
 import winston from 'winston';
 
+import * as config from '../config.js';
 import { KVBufferStore } from '../types.js';
 
 export class RedisKvStore implements KVBufferStore {
   private client: RedisClientType;
   private log: winston.Logger;
-  private defaultTtlSeconds?: number;
+  private defaultTtlSeconds: number;
 
-  constructor({ log, redisUrl }: { log: winston.Logger; redisUrl: string }) {
+  constructor({
+    log,
+    redisUrl,
+    defaultTtlSeconds = config.ARNS_CACHE_TTL_MS,
+  }: {
+    log: winston.Logger;
+    redisUrl: string;
+    defaultTtlSeconds?: number;
+  }) {
     this.log = log.child({ class: this.constructor.name });
+    this.defaultTtlSeconds = defaultTtlSeconds;
     this.client = createClient({
       url: redisUrl,
     });
@@ -55,7 +65,12 @@ export class RedisKvStore implements KVBufferStore {
       commandOptions({ returnBuffers: true }),
       key,
     );
-    return value ?? undefined;
+
+    if (!value) {
+      return undefined;
+    }
+
+    return value;
   }
 
   async has(key: string): Promise<boolean> {
@@ -68,13 +83,9 @@ export class RedisKvStore implements KVBufferStore {
     }
   }
 
-  async set(key: string, buffer: Buffer, ttlSeconds?: number): Promise<void> {
-    if (ttlSeconds !== undefined) {
-      await this.client.set(key, buffer, {
-        EX: ttlSeconds ?? this.defaultTtlSeconds,
-      });
-    } else {
-      await this.client.set(key, buffer);
-    }
+  async set(key: string, buffer: Buffer): Promise<void> {
+    await this.client.set(key, buffer, {
+      EX: this.defaultTtlSeconds,
+    });
   }
 }

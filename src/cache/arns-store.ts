@@ -17,28 +17,35 @@
  */
 import winston from 'winston';
 
-import { KVBufferStore } from '../types.js';
+import * as metrics from '../metrics.js';
+import { NameResolver } from '../resolver/arns-resolver.js';
+import { ArNSResolvedData, KVBufferStore } from '../types.js';
 
-export class ArNSStore implements KVBufferStore {
+export class ArNSStore implements KVBufferStore, NameResolver {
   private log: winston.Logger;
   private prefix: string;
   private kvStore: KVBufferStore;
+  private resolver: NameResolver;
 
   constructor({
     log,
+    resolver,
     kvStore,
     prefix = 'ArNS',
   }: {
     log: winston.Logger;
+    resolver: NameResolver;
     kvStore: KVBufferStore;
     prefix?: string;
   }) {
     this.log = log.child({ class: this.constructor.name });
+    this.resolver = resolver;
     this.kvStore = kvStore;
     this.prefix = prefix;
     this.log.info('ArNSStore initialized', {
       prefix,
       kvStore: kvStore.constructor.name,
+      resolver: resolver.constructor.name,
     });
   }
 
@@ -47,12 +54,61 @@ export class ArNSStore implements KVBufferStore {
     return `${this.prefix}|${key}`;
   }
 
-  async get(key: string): Promise<Buffer | undefined> {
-    return this.kvStore.get(this.hashKey(key));
+  private serialize(buffer: Buffer, ttlSeconds: number): Buffer {
+    const expirationBuffer = Buffer.allocUnsafe(8);
+    expirationBuffer.writeBigInt64BE(BigInt(Date.now() + ttlSeconds * 1000), 0);
+    const ttlBuffer = Buffer.allocUnsafe(8);
+    ttlBuffer.writeBigInt64BE(BigInt(ttlSeconds * 1000), 0);
+    return Buffer.concat([expirationBuffer, ttlBuffer, buffer]);
   }
 
-  async set(key: string, value: Buffer, ttlSeconds?: number): Promise<void> {
-    return this.kvStore.set(this.hashKey(key), value, ttlSeconds);
+  private deserialize(buffer: Buffer): {
+    expired: boolean;
+    buffer: Buffer;
+    ttlSeconds: number;
+  } {
+    const expirationTimestamp = buffer.readBigInt64BE(0); // 8 bytes for a timestamp
+    const ttlMilliseconds = buffer.readBigInt64BE(8); // 8 bytes for a timestamp
+    return {
+      expired: Date.now() >= Number(expirationTimestamp),
+      ttlSeconds: Number(ttlMilliseconds) / 1000,
+      buffer: buffer.slice(16),
+    };
+  }
+
+  async get(key: string): Promise<Buffer | undefined> {
+    const result = await this.getWithExpirationData(key);
+    if (result === undefined || result.expired) {
+      return undefined;
+    }
+    return result.buffer;
+  }
+
+  private async getWithExpirationData(key: string): Promise<
+    | {
+        buffer: Buffer;
+        ttlSeconds: number;
+        expired: boolean;
+      }
+    | undefined
+  > {
+    const result = await this.kvStore.get(this.hashKey(key));
+    if (result === undefined) {
+      metrics.arnsCacheMiss.inc({
+        cache_type: this.kvStore.constructor.name,
+      });
+      return undefined;
+    }
+    metrics.arnsCacheHit.inc({
+      cache_type: this.kvStore.constructor.name,
+    });
+
+    return this.deserialize(result);
+  }
+
+  async set(key: string, value: Buffer, ttlSeconds: number): Promise<void> {
+    const serialized = this.serialize(value, ttlSeconds);
+    return this.kvStore.set(this.hashKey(key), serialized);
   }
 
   async del(key: string): Promise<void> {
@@ -65,5 +121,55 @@ export class ArNSStore implements KVBufferStore {
 
   async close(): Promise<void> {
     return this.kvStore.close();
+  }
+
+  /**
+   * Resolves a name and updates the cache if it's expired.
+   * @param key - The name to resolve.
+   * @returns The resolved name data.
+   */
+  async resolve(key: string): Promise<ArNSResolvedData | undefined> {
+    const cachedWithExpirationData = await this.getWithExpirationData(key);
+    if (cachedWithExpirationData !== undefined) {
+      if (cachedWithExpirationData.expired) {
+        this.log.debug('Cache expired, resolving name', { key });
+        try {
+          const resolved = await this.resolver.resolve(key);
+          if (resolved) {
+            await this.set(
+              key,
+              Buffer.from(JSON.stringify(resolved)),
+              resolved.ttlSeconds,
+            );
+            this.log.debug('Updated cache', {
+              key,
+              ttlSeconds: resolved.ttlSeconds,
+            });
+            return resolved;
+          }
+        } catch (error: any) {
+          this.log.error('Error resolving name. Falling back to cache', {
+            key,
+            message: error.message,
+            stack: error.stack,
+          });
+        }
+      }
+      return JSON.parse(cachedWithExpirationData.buffer.toString());
+    }
+
+    // if not in cache, resolve it
+    const resolved = await this.resolver.resolve(key);
+    if (!resolved) {
+      return undefined;
+    }
+    // update the cache with the resolved data
+    await this.set(
+      key,
+      Buffer.from(JSON.stringify(resolved)),
+      resolved.ttlSeconds,
+    );
+    this.log.debug('Updated cache', { key, ttlSeconds: resolved.ttlSeconds });
+    return resolved;
   }
 }

@@ -1,5 +1,5 @@
 {
   "watch": ["src", "docs", ".env"],
   "ext": "ts,yaml,json",
-  "exec": "ts-node --esm -r dotenv/config --project ./tsconfig.json ./src/service.ts"
+  "exec": "NODE_OPTIONS=\"--import=./register.js\" ts-node --esm -r dotenv/config --project ./tsconfig.json ./src/service.ts"
 }

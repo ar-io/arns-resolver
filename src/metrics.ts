@@ -15,20 +15,18 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-export type RecordTxId = string;
-export interface KVBufferStore {
-  get(key: string): Promise<Buffer | undefined>;
-  set(key: string, buffer: Buffer, ttlSeconds?: number): Promise<void>;
-  del(key: string): Promise<void>;
-  has(key: string): Promise<boolean>;
-  close(): Promise<void>;
-}
+import * as promClient from 'prom-client';
 
-export type ArNSResolvedData = {
-  ttlSeconds: number;
-  txId: string;
-  processId: string;
-  type: 'lease' | 'permabuy';
-  owner?: string;
-  endTimestamp?: number;
-};
+export const metrics = new promClient.Registry();
+
+export const arnsCacheHit = new promClient.Counter({
+  name: 'arns_cache_hit',
+  help: 'Number of times the ARNS cache was hit',
+  labelNames: ['cache_type'],
+});
+
+export const arnsCacheMiss = new promClient.Counter({
+  name: 'arns_cache_miss',
+  help: 'Number of times the ARNS cache was missed',
+  labelNames: ['cache_type'],
+});

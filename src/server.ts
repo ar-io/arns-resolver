@@ -15,19 +15,17 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import { ANT, AOProcess } from '@ar.io/sdk/node';
-import { connect } from '@permaweb/aoconnect';
 import cors from 'cors';
 import express from 'express';
 import * as OpenApiValidator from 'express-openapi-validator';
+import createPrometheusMiddleware from 'express-prometheus-middleware';
 import fs from 'node:fs';
 import swaggerUi from 'swagger-ui-express';
 import YAML from 'yaml';
 
 import * as config from './config.js';
 import log from './log.js';
-import { cache, contract } from './system.js';
-import { ArNSResolvedData } from './types.js';
+import { arns } from './system.js';
 
 // HTTP server
 export const app = express();
@@ -43,6 +41,13 @@ app.use(
 app.get('/', (_req, res) => {
   res.redirect('/ar-io/resolver/info');
 });
+
+app.use(
+  createPrometheusMiddleware({
+    metricsPath: '/ar-io/resolver/__metrics',
+    extraMasks: [],
+  }),
+);
 
 // OpenAPI spec
 const openapiDocument = YAML.parse(
@@ -89,70 +94,13 @@ app.get('/ar-io/resolver/info', (_req, res) => {
 
 app.get('/ar-io/resolver/records/:name', async (req, res) => {
   const arnsName = req.params.name;
+  const logger = log.child({
+    name: arnsName,
+  });
 
-  // THIS IS ESSENTIALLY A READ THROUGH CACHE USING REDIS - TODO: could replace this with a resolver interface with read through logic
   try {
-    const logger = log.child({ arnsName });
-    logger.debug('Checking cache for record...');
-
-    let resolvedRecordData: ArNSResolvedData | undefined;
-    const cachedNameResolution = await cache.get(arnsName);
-    if (cachedNameResolution) {
-      logger.debug('Found cached arns name resolution');
-      resolvedRecordData = JSON.parse(cachedNameResolution.toString());
-    } else {
-      logger.debug('Cache miss for arns name');
-      const apexName = arnsName.split('_').slice(-1)[0];
-      const record = await contract.getArNSRecord({ name: apexName });
-      if (!record) {
-        res.status(404).json({
-          error: 'Record not found',
-        });
-        return;
-      }
-
-      // get the ant id and use that to get the record from the cache
-      const antId = record.processId;
-      const ant = ANT.init({
-        process: new AOProcess({
-          processId: antId,
-          ao: connect({
-            MU_URL: config.AO_MU_URL,
-            CU_URL: config.AO_CU_URL,
-            GRAPHQL_URL: config.AO_GRAPHQL_URL,
-            GATEWAY_URL: config.AO_GATEWAY_URL,
-          }),
-        }),
-      });
-      const undername = arnsName.split('_').slice(0, -1).join('_') || '@';
-      const antRecord = await ant.getRecord({ undername });
-      if (!antRecord) {
-        res.status(404).json({
-          error: 'Record not found',
-        });
-        return;
-      }
-      const owner = await ant.getOwner();
-      resolvedRecordData = {
-        ttlSeconds: antRecord.ttlSeconds,
-        txId: antRecord.transactionId,
-        processId: antId,
-        type: record.type,
-        owner,
-      };
-
-      const resolvedRecordBuffer = Buffer.from(
-        JSON.stringify(resolvedRecordData),
-      );
-
-      // cache the record in the cache
-      await cache.set(
-        arnsName,
-        resolvedRecordBuffer,
-        resolvedRecordData.ttlSeconds,
-      );
-    }
-
+    const start = Date.now();
+    const resolvedRecordData = await arns.resolve(arnsName);
     if (!resolvedRecordData) {
       res.status(404).json({
         error: 'Record not found',
@@ -160,10 +108,10 @@ app.get('/ar-io/resolver/records/:name', async (req, res) => {
       return;
     }
 
-    logger.debug('Successfully fetched record from cache', {
-      name: arnsName,
+    logger.debug('Successfully resolved name', {
       txId: resolvedRecordData.txId,
       ttlSeconds: resolvedRecordData.ttlSeconds,
+      durationMs: Date.now() - start,
     });
     res
       .status(200)
@@ -180,7 +128,6 @@ app.get('/ar-io/resolver/records/:name', async (req, res) => {
       });
   } catch (err: any) {
     log.error('Failed to get record', {
-      name: arnsName,
       message: err?.message,
       stack: err?.stack,
     });

@@ -22,12 +22,12 @@ import { ArNSStore } from './cache/arns-store.js';
 import * as config from './config.js';
 import { createKvStore } from './lib/kv-store.js';
 import log from './log.js';
+import { ArNSResolver } from './resolver/arns-resolver.js';
 
 export const contract: AoIORead = IO.init({
   process: new AOProcess({
     processId: config.IO_PROCESS_ID,
     ao: connect({
-      // @permaweb/aoconnect defaults will be used if these are not provided
       MU_URL: config.AO_MU_URL,
       CU_URL: config.AO_CU_URL,
       GRAPHQL_URL: config.AO_GRAPHQL_URL,
@@ -36,8 +36,20 @@ export const contract: AoIORead = IO.init({
   }),
 });
 
-export const cache = new ArNSStore({
+export const resolver = new ArNSResolver({
   log,
+  io: contract,
+  ao: connect({
+    MU_URL: config.AO_MU_URL,
+    CU_URL: config.AO_CU_URL,
+    GRAPHQL_URL: config.AO_GRAPHQL_URL,
+    GATEWAY_URL: config.AO_GATEWAY_URL,
+  }),
+});
+
+export const arns = new ArNSStore({
+  log,
+  resolver,
   kvStore: createKvStore({
     log,
     type: config.ARNS_CACHE_TYPE,
@@ -66,6 +78,6 @@ process.on('SIGINT', async () => {
 });
 
 export const shutdown = async () => {
-  await cache.close();
+  await arns.close();
   process.exit(0);
 };
